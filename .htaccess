@@ -1,0 +1,12 @@
+# data/ と DB ファイルへの直接アクセスをブロック
+<FilesMatch "\.(db|sqlite|py|cgi)$">
+    Deny from all
+</FilesMatch>
+
+RewriteEngine On
+
+# data/ ディレクトリへのアクセス禁止
+RewriteRule ^data/ - [F,L]
+
+# DirectoryIndex を index.php に
+DirectoryIndex index.php
