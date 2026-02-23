@@ -571,12 +571,28 @@ function getRegion(loc) {
 
 // ===== Filter chips init =====
 function buildFilterChips() {
+  // プロフィールデータから動的にユニークな値を収集
+  const dynamicIndustries = new Set(industries);
+  const dynamicSkills = new Set(originalSkills);
+  const dynamicRegions = new Set(regionNames);
+
+  allProfiles.forEach(p => {
+    if (p.industry) dynamicIndustries.add(p.industry);
+    if (p.skills) {
+      p.skills.split(',').map(s => s.trim()).filter(Boolean).forEach(s => dynamicSkills.add(s));
+    }
+    if (p.location) {
+      const r = getRegion(p.location);
+      if (r) dynamicRegions.add(r);
+    }
+  });
+
   const indEl = document.getElementById('chipsIndustry');
-  indEl.innerHTML = industries.map(v => `<span class="filter-chip" data-cat="industry" data-value="${escapeHtml(v)}">${escapeHtml(v)}</span>`).join('');
+  indEl.innerHTML = [...dynamicIndustries].map(v => `<span class="filter-chip${selectedFilters.industry.has(v) ? ' selected' : ''}" data-cat="industry" data-value="${escapeHtml(v)}">${escapeHtml(v)}</span>`).join('');
   const sklEl = document.getElementById('chipsSkills');
-  sklEl.innerHTML = originalSkills.map(v => `<span class="filter-chip" data-cat="skills" data-value="${escapeHtml(v)}">${escapeHtml(v)}</span>`).join('');
+  sklEl.innerHTML = [...dynamicSkills].map(v => `<span class="filter-chip${selectedFilters.skills.has(v) ? ' selected' : ''}" data-cat="skills" data-value="${escapeHtml(v)}">${escapeHtml(v)}</span>`).join('');
   const locEl = document.getElementById('chipsLocation');
-  locEl.innerHTML = regionNames.map(v => `<span class="filter-chip" data-cat="location" data-value="${escapeHtml(v)}">${escapeHtml(v)}</span>`).join('');
+  locEl.innerHTML = [...dynamicRegions].map(v => `<span class="filter-chip${selectedFilters.location.has(v) ? ' selected' : ''}" data-cat="location" data-value="${escapeHtml(v)}">${escapeHtml(v)}</span>`).join('');
 
   document.querySelectorAll('.filter-chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -914,13 +930,24 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 });
 
 // ===== Init =====
+function updateIndustrySelect() {
+  const sel = document.getElementById('formIndustry');
+  const currentVal = sel.value;
+  const dynamicIndustries = new Set(industries);
+  allProfiles.forEach(p => { if (p.industry) dynamicIndustries.add(p.industry); });
+  sel.innerHTML = '<option value="">選択してください</option>' +
+    [...dynamicIndustries].map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+  if (currentVal) sel.value = currentVal;
+}
+
 async function reloadData() {
   await fetchAllProfiles();
+  buildFilterChips();
+  updateIndustrySelect();
   applyFilters();
   loadStats();
 }
 
-buildFilterChips();
 reloadData();
 </script>
 </body>
